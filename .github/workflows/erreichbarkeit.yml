@@ -1,0 +1,33 @@
+name: Erreichbarkeit
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ziele abfragen
+        id: pruefung
+        run: bash scripts/check.sh
+
+      - name: Störung melden
+        if: steps.pruefung.outputs.ausfaelle != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BERICHT: ${{ steps.pruefung.outputs.bericht }}
+        run: bash scripts/incident.sh open
+
+      - name: Entwarnung geben
+        if: steps.pruefung.outputs.ausfaelle == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/incident.sh close

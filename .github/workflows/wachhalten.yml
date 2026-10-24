@@ -1,0 +1,24 @@
+# GitHub schaltet geplante Abläufe ab, wenn ein Repository 60 Tage lang
+# unberührt bleibt. Dieser Commit alle zwei Wochen verhindert das.
+name: Wachhalten
+
+on:
+  schedule:
+    - cron: '0 7 1,15 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  anstupsen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git config user.name 'Wächter'
+          git config user.email 'actions@github.com'
+          date -u '+%Y-%m-%dT%H:%M:%SZ' > .wachhalten
+          git add .wachhalten
+          git commit -m 'chore: Zeitplan wachhalten' || exit 0
+          git push
