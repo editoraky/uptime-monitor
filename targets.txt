@@ -6,4 +6,3 @@ Portfolio Akin|https://akin-kuelhanbey.com/|Full Stack Developer</title>
 Mail-Dienst Akin|https://akin-kuelhanbey.com/api/health|"status":"ok"
 Coderr Refiye|https://coderr.refiye-kuelhanbey.com/|<title>Coderr/</title>
 Coderr Akin|https://coderr.akin-kuelhanbey.com/|<title>Coderr/</title>
-Probealarm|https://refiye-kuelhanbey.com/api/gibtesnicht|egal
