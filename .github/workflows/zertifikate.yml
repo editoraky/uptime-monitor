@@ -1,0 +1,38 @@
+name: Zertifikate
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restlaufzeiten prüfen
+        id: pruefung
+        run: bash scripts/zertifikate.sh
+
+      - name: Warnung melden
+        if: steps.pruefung.outputs.warnungen != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BERICHT: ${{ steps.pruefung.outputs.bericht }}
+          LABEL: zertifikat
+          TITEL: Zertifikat läuft ab
+          EINLEITUNG: 'diese Zertifikate brauchen Aufmerksamkeit:'
+        run: bash scripts/incident.sh open
+
+      - name: Entwarnung geben
+        if: steps.pruefung.outputs.warnungen == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LABEL: zertifikat
+          ENTWARNUNG: Alle Zertifikate haben wieder ausreichend Restlaufzeit
+        run: bash scripts/incident.sh close

@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
-# Legt bei einer Störung genau ein Issue an und schließt es wieder, sobald
-# alle Ziele antworten. Läuft nur im Workflow — braucht gh und GH_TOKEN.
+# Legt bei einem Problem genau ein Issue an und schließt es wieder, sobald
+# der Grund weg ist. Läuft nur im Workflow — braucht gh und GH_TOKEN.
 
 set -euo pipefail
 
-LABEL=stoerung
+# Label und Texte sind überschreibbar, damit derselbe Melder auch für andere
+# Prüfungen taugt, etwa für ablaufende Zertifikate.
+LABEL=${LABEL:-stoerung}
+TITEL=${TITEL:-Störung erkannt}
+EINLEITUNG=${EINLEITUNG:-diese Ziele antworten nicht wie erwartet:}
+ENTWARNUNG=${ENTWARNUNG:-Alle Ziele antworten wieder}
 MELDEN_AN=${MELDEN_AN:-editoraky}
 REPO=$GITHUB_REPOSITORY
 
@@ -13,28 +18,28 @@ offen=$(gh issue list --repo "$REPO" --label "$LABEL" --state open --limit 1 \
 
 case ${1:?Aufruf: incident.sh open|close} in
   open)
-    # Bei anhaltender Störung bleibt es bei der einen Meldung, kein Dauerfeuer.
+    # Bei anhaltendem Problem bleibt es bei der einen Meldung, kein Dauerfeuer.
     if [ -n "$offen" ]; then
-      echo "Störung bereits gemeldet in #$offen"
+      echo "Bereits gemeldet in #$offen"
       exit 0
     fi
     gh label create "$LABEL" --repo "$REPO" --color B60205 \
-       --description 'Automatisch erkannte Störung' 2>/dev/null || true
+       --description 'Automatisch erkannt' 2>/dev/null || true
     gh issue create --repo "$REPO" \
-      --title "Störung erkannt: $(date -u '+%d.%m.%Y %H:%M UTC')" \
+      --title "$TITEL: $(date -u '+%d.%m.%Y %H:%M UTC')" \
       --label "$LABEL" \
       --assignee "$MELDEN_AN" \
-      --body "@$MELDEN_AN — diese Ziele antworten nicht wie erwartet:
+      --body "@$MELDEN_AN — $EINLEITUNG
 
 $BERICHT
 Lauf: $GITHUB_SERVER_URL/$REPO/actions/runs/$GITHUB_RUN_ID
 
-Dieses Issue schließt sich von selbst, sobald wieder alles antwortet."
+Dieses Issue schließt sich von selbst, sobald das Problem behoben ist."
     ;;
   close)
     if [ -z "$offen" ]; then exit 0; fi
     gh issue comment "$offen" --repo "$REPO" \
-      --body "Alle Ziele antworten wieder ($(date -u '+%d.%m.%Y %H:%M UTC'))."
+      --body "$ENTWARNUNG ($(date -u '+%d.%m.%Y %H:%M UTC'))."
     gh issue close "$offen" --repo "$REPO"
     ;;
 esac
